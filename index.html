@@ -20,7 +20,7 @@ section{display:none}section.on{display:block}
 label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
 input,select,textarea{width:100%;font-size:17px;padding:11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
 button{font-size:16px;border:0;border-radius:10px;padding:13px 14px;background:var(--pri);color:#fff;font-weight:600;cursor:pointer}
-button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}button.full{width:100%}
+button.sec{background:#e8edf3;color:var(--pri)}button.ok{background:var(--ok)}button.red{background:var(--ng)}button.full{width:100%}
 .row{display:flex;gap:8px}.row>*{flex:1}
 .seg{display:flex;gap:8px}.seg button{flex:1;background:#e8edf3;color:var(--pri)}.seg button.on{background:var(--pri);color:#fff}
 .list{max-height:55vh;overflow:auto}
@@ -29,9 +29,14 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
 .tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:9px;background:#e8edf3;color:var(--pri);margin-left:4px}
 .tag.no{background:#fde7e5;color:var(--ng)}
 #reader{width:100%;border-radius:10px;overflow:hidden;background:#000;min-height:200px}
-.result{border-radius:14px;padding:22px 16px;color:#fff;text-align:center;margin-bottom:12px}
-.result h2{margin:0 0 6px;font-size:28px}.result p{margin:4px 0}
-.r-ok{background:var(--ok)}.r-ng{background:var(--ng)}.r-warn{background:var(--warn)}
+.result{border-radius:14px;padding:16px;color:#fff;text-align:center;margin-bottom:12px}
+.result h2{margin:0 0 4px;font-size:24px}.result p{margin:2px 0;font-size:20px;letter-spacing:.5px}
+.r-ok{background:var(--ok)}.r-ng{background:var(--ng)}.r-warn{background:var(--warn)}.r-info{background:var(--pri)}
+.info{border:2px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff;cursor:pointer}
+.info.pick{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri) inset}
+.info .nm{font-size:19px;font-weight:700;margin-bottom:6px}
+.info table{width:100%;border-collapse:collapse;font-size:15px}
+.info td{padding:3px 0;vertical-align:top}.info td:first-child{color:var(--sub);width:78px}
 .muted{color:var(--sub);font-size:13px}
 .toast{position:fixed;left:16px;right:16px;bottom:18px;background:#222;color:#fff;padding:12px 14px;border-radius:10px;display:none;z-index:20;text-align:center}
 .badge{background:#fff;color:var(--pri);border-radius:10px;padding:1px 8px;font-size:13px;font-weight:700}
@@ -61,28 +66,13 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
     <label>구분</label>
     <div class="seg" id="modeSeg"><button data-m="자재입고" class="on">자재 입고</button><button data-m="완제품">완제품 검사</button></div>
     <div style="height:14px"></div>
-    <button class="full" onclick="toSearch()">다음</button>
+    <button class="full" onclick="toHome()">검사 시작</button>
     <p class="muted" id="mInfo"></p>
   </div>
 </section>
 
-<!-- 품목 검색 -->
-<section id="s-search">
-  <div class="card">
-    <input id="kw" type="search" placeholder="자재코드 또는 품명 검색" autocomplete="off">
-    <div class="list" id="list"></div>
-  </div>
-  <div class="row">
-    <button class="sec" onclick="startScan(null)">바코드로 조회</button>
-    <button class="sec" onclick="openReg()">신규 등록</button>
-  </div>
-  <div style="height:8px"></div>
-  <div class="row"><button class="sec" onclick="show('s-user')">검사자 변경</button><button class="sec" onclick="openAdmin()">관리자</button></div>
-</section>
-
-<!-- 스캔 -->
+<!-- 스캔 (기본 화면) -->
 <section id="s-scan">
-  <button class="sec full" style="margin-bottom:10px" onclick="goBack()">← 품목 선택으로</button>
   <div class="card" id="selCard"></div>
   <div class="card" id="lotCard">
     <div class="row"><div><label>LOT</label><input id="lot"></div><div><label>수량</label><input id="qty" inputmode="numeric"></div></div>
@@ -93,21 +83,49 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
     <button class="sec" onclick="torch()">플래시</button>
     <button class="sec" onclick="manual()">숫자 입력</button>
   </div>
+  <div id="homeBtns">
+    <div class="row" style="margin-top:8px">
+      <button class="sec" onclick="openSearch()">품목 검색</button>
+      <button class="sec" onclick="openReg()">신규 등록</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="sec" onclick="show('s-user')">검사자 변경</button>
+      <button class="sec" onclick="openAdmin()">관리자</button>
+    </div>
+  </div>
+  <button id="backFromScan" class="sec full hide" style="margin-top:8px" onclick="goBack()">← 입력 화면으로</button>
 </section>
 
-<!-- 결과 -->
+<!-- 조회 결과 -->
 <section id="s-res">
-  <button class="sec full" style="margin-bottom:10px" onclick="backSearch()">← 품목 선택으로 (저장 안 함)</button>
   <div id="resBox" class="result"></div>
+  <div id="resItems"></div>
   <div class="card">
     <label>비고</label><input id="note">
-    <div class="row" style="margin-top:10px">
-      <button class="sec" onclick="takePhoto('res')">📷 사진 촬영</button>
-      <button id="saveBtn" onclick="saveInspect()">저장 후 다음</button>
-    </div>
+    <div style="margin-top:8px"><button class="sec full" onclick="takePhoto('res')">📷 사진 촬영</button></div>
     <img id="resThumb" class="thumb">
-    <div id="resExtra" style="margin-top:10px"></div>
+    <div id="resActs" style="margin-top:10px"></div>
+    <div id="resExtra" style="margin-top:8px"></div>
   </div>
+  <button class="sec full" onclick="toHome()">← 다시 스캔 (저장 안 함)</button>
+</section>
+
+<!-- 품목 검색 -->
+<section id="s-search">
+  <div class="card">
+    <p id="linkNote" class="hide" style="margin:0 0 8px;color:var(--pri);font-weight:600"></p>
+    <input id="kw" type="search" placeholder="자재코드 또는 품명 검색" autocomplete="off">
+    <div class="list" id="list"></div>
+  </div>
+  <button class="sec full" onclick="toHome()">← 스캔 화면으로</button>
+</section>
+
+<!-- 품목 상세 (검색에서 선택) -->
+<section id="s-item">
+  <div id="itemBox"></div>
+  <div class="row"><button class="sec" onclick="openEdit(S.viewCode)">품목 수정 (수정 PIN)</button></div>
+  <div style="height:8px"></div>
+  <div class="row"><button class="sec" onclick="openSearch(true)">← 검색 결과</button><button class="sec" onclick="toHome()">스캔 화면</button></div>
 </section>
 
 <!-- 신규 등록 -->
@@ -122,7 +140,7 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
     <div class="row" style="margin-top:12px"><button class="sec" onclick="takePhoto('reg')">📷 사진</button><button onclick="doReg()">등록</button></div>
     <img id="regThumb" class="thumb">
   </div>
-  <button class="sec full" onclick="backSearch()">취소</button>
+  <button class="sec full" onclick="toHome()">취소</button>
 </section>
 
 <!-- 수정 -->
@@ -140,7 +158,7 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
     <div class="row" style="margin-top:12px"><button class="sec" onclick="takePhoto('edit')">📷 근거 사진</button><button onclick="doEdit()">수정 저장</button></div>
     <img id="editThumb" class="thumb">
   </div>
-  <button class="sec full" onclick="backSearch()">취소</button>
+  <button class="sec full" onclick="toHome()">취소</button>
 </section>
 
 <!-- 관리자 -->
@@ -164,7 +182,7 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
       <div style="height:8px"></div><button class="full" onclick="setUsers()">저장</button>
     </div>
   </div>
-  <button class="sec full" onclick="backSearch()">닫기</button>
+  <button class="sec full" onclick="toHome()">닫기</button>
 </section>
 
 <input id="photoIn" type="file" accept="image/*" capture="environment" class="hide">
@@ -177,7 +195,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6ISZQ8zW0AaFU_uPryyaE
 
 const DEMO = !API_URL;
 const $ = id => document.getElementById(id);
-const S = { pin: '', user: '', mode: '자재입고', master: [], byCode: {}, byBc: {}, sel: null, last: null,
+const S = { pin: '', user: '', mode: '자재입고', master: [], byCode: {}, byBc: {}, last: null, pick: null, viewCode: null, linkBc: null,
   photo: { res: null, reg: null, edit: null }, photoFor: null, sess: { n: 0, ok: 0, ng: 0 }, scanner: null, scanTarget: null };
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
@@ -190,8 +208,9 @@ function toast(m, ms) { const t = $('toast'); t.textContent = m; t.style.display
 function show(id) { document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === id)); window.scrollTo(0, 0); if (id !== 's-scan') stopScan(); }
 const digits = s => String(s || '').replace(/\D/g, '');
 const norm = s => { const d = digits(s); return d.length === 12 ? '0' + d : d; };
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const now = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+const short = t => [...new Set(String(t || '').replace(/^\[[^\]]+\]/, '').split('_').slice(1))].join(' · ') || t || '';
 function beep(ok) { try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = ok ? 880 : 220; g.gain.value = .2; o.start(); o.stop(a.currentTime + (ok ? .15 : .6)); } catch (e) {} if (navigator.vibrate) navigator.vibrate(ok ? 60 : [200, 80, 200]); }
 
 /* ===== 서버 통신 ===== */
@@ -217,10 +236,15 @@ async function login() {
 }
 function paintMode() { document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === S.mode)); }
 $('modeSeg').onclick = e => { if (e.target.dataset.m) { S.mode = e.target.dataset.m; paintMode(); } };
-function toSearch() {
-  S.user = $('user').value; store.set('bq_user', S.user); store.set('bq_mode', S.mode);
-  $('who').textContent = `${S.user} · ${S.mode === '완제품' ? '완제품' : '자재입고'}`;
-  show('s-search'); $('kw').focus(); renderList();
+function toHome() {
+  if (!S.user || document.querySelector('section.on').id === 's-user') {
+    S.user = $('user').value; store.set('bq_user', S.user); store.set('bq_mode', S.mode);
+    $('who').textContent = `${S.user} · ${S.mode === '완제품' ? '완제품' : '자재입고'}`;
+  }
+  S.linkBc = null; S.scanTarget = null;
+  $('selCard').innerHTML = '<b>바코드를 비추세요</b><div class="muted">찍으면 DB에 등록된 품목 정보가 나옵니다</div>';
+  $('lotCard').classList.remove('hide'); $('homeBtns').classList.remove('hide'); $('backFromScan').classList.add('hide');
+  paintSess(); show('s-scan'); runScanner(onScan);
 }
 
 /* ===== 마스터 ===== */
@@ -235,40 +259,27 @@ async function loadMaster(ver) {
 }
 function setMaster(rows) {
   S.master = rows; S.byCode = {}; S.byBc = {};
-  rows.forEach(x => { S.byCode[x[0]] = x; if (x[1] && x[5] !== 'N') (S.byBc[norm(x[1])] = S.byBc[norm(x[1])] || []).push(x[0]); });
+  rows.forEach(x => { S.byCode[x[0]] = x; if (x[1]) (S.byBc[norm(x[1])] = S.byBc[norm(x[1])] || []).push(x[0]); });
   const nb = rows.filter(x => x[1]).length;
   $('mInfo').textContent = `DB ${rows.length.toLocaleString()}개 품목 (바코드 ${nb.toLocaleString()}개)`;
-  renderList();
 }
 async function refreshMaster(ver) { store.set('bq_master', null); await loadMaster(ver); }
 
-/* ===== 검색 ===== */
-$('kw').addEventListener('input', renderList);
-function renderList() {
-  const kw = $('kw').value.trim().toLowerCase().replace(/\s+/g, '');
-  const el = $('list');
-  if (!kw) { el.innerHTML = '<p class="muted">자재코드나 품명 일부를 입력하세요. 예) 단상자, 5006391</p>'; return; }
-  const hit = [];
-  for (const x of S.master) {
-    if (x[0].includes(kw) || String(x[2]).toLowerCase().replace(/\s+/g, '').includes(kw)) { hit.push(x); if (hit.length >= 80) break; }
-  }
-  el.innerHTML = hit.length ? hit.map(x => `<div class="item" data-c="${esc(x[0])}"><b>${esc(x[2])}</b><span>${esc(x[0])} · ${esc(short(x[3]))}${x[4] ? ' · ' + esc(x[4]) : ''}${x[1] ? '<span class="tag">' + esc(x[1]) + '</span>' : '<span class="tag no">바코드 없음</span>'}${x[5] === 'N' ? '<span class="tag no">사용중지</span>' : ''}</span></div>`).join('')
-    : '<p class="muted">검색 결과 없음 → [신규 등록]</p>';
+/* ===== 품목 정보 카드 ===== */
+function infoCard(x, pickable) {
+  return `<div class="info${S.pick === x[0] ? ' pick' : ''}" ${pickable ? `data-c="${esc(x[0])}"` : ''}>
+    <div class="nm">${esc(x[2])}</div>
+    <table>
+      <tr><td>자재코드</td><td><b>${esc(x[0])}</b></td></tr>
+      <tr><td>구분</td><td>${esc(short(x[3]))}</td></tr>
+      <tr><td>고객사</td><td>${esc(x[4] || '-')}</td></tr>
+      <tr><td>바코드</td><td>${x[1] ? esc(x[1]) : '<span style="color:var(--ng)">미등록</span>'}</td></tr>
+      ${x[5] === 'N' ? '<tr><td>상태</td><td><span class="tag no">사용중지 품목</span></td></tr>' : ''}
+    </table></div>`;
 }
-const short = t => String(t || '').replace(/^\[[^\]]+\]/, '').split('_').slice(1).join('_') || t || '';
-$('list').onclick = e => { const it = e.target.closest('.item'); if (it) startScan(it.dataset.c); };
 
 /* ===== 스캔 ===== */
-function startScan(code) {
-  S.sel = code ? S.byCode[code] : null; S.scanTarget = null;
-  document.querySelector('#s-scan > button').textContent = '← 품목 선택으로';
-  $('lotCard').classList.toggle('hide', !S.sel);
-  $('selCard').innerHTML = S.sel
-    ? `<b>${esc(S.sel[2])}</b><div class="muted">${esc(S.sel[0])} · ${esc(short(S.sel[3]))}</div><div>등록 바코드: ${S.sel[1] ? '<b>' + esc(S.sel[1]) + '</b>' : '<span style="color:var(--ng)">없음</span>'}</div><button class="sec" style="margin-top:8px" onclick="openEdit('${esc(S.sel[0])}')">품목 수정</button>`
-    : '<b>바코드 조회 모드</b><div class="muted">찍은 바코드가 어떤 품목인지 확인합니다</div>';
-  paintSess(); show('s-scan'); runScanner(onScan);
-}
-function paintSess() { $('sess').textContent = S.sess.n ? `이번 입고 누계: ${S.sess.n}건 (적합 ${S.sess.ok} / 부적합 ${S.sess.ng})` : ''; }
+function paintSess() { $('sess').textContent = S.sess.n ? `오늘 이 화면 누계: ${S.sess.n}건 (일치 ${S.sess.ok} / 불일치·미등록 ${S.sess.ng})` : ''; }
 async function runScanner(cb) {
   await stopScan();
   if (!window.Html5Qrcode) { toast('스캐너를 불러오지 못했습니다. [숫자 입력]을 사용하세요'); return; }
@@ -281,59 +292,56 @@ async function runScanner(cb) {
 async function stopScan() { const s = S.scanner; S.scanner = null; if (s) { try { await s.stop(); s.clear(); } catch (e) {} } }
 async function torch() { try { const s = S.scanner; S._torch = !S._torch; await s.applyVideoConstraints({ advanced: [{ torch: S._torch }] }); } catch (e) { toast('이 기기는 플래시 제어를 지원하지 않습니다'); } }
 function manual() { const v = prompt('바코드 숫자 입력'); if (v && digits(v)) { stopScan(); (S.scanTarget ? fillTarget : onScan)(v, '수기입력'); } }
-function backSearch() { show('s-search'); renderList(); }
-function goBack() { if (S.scanTarget) { S.scanTarget = null; show(prevSection); } else backSearch(); }
-/* 폰의 뒤로가기 버튼: 앱을 닫지 않고 이전 화면으로 */
-history.pushState(null, '');
-window.addEventListener('popstate', () => {
-  history.pushState(null, '');
-  const cur = document.querySelector('section.on').id;
-  if (cur === 's-scan') goBack();
-  else if (['s-res', 's-reg', 's-edit', 's-admin'].includes(cur)) backSearch();
-  else if (cur === 's-search') show('s-user');
-});
 
 function onScan(raw, method) {
-  const bc = digits(raw) || String(raw).trim(), n = norm(bc);
-  const hits = S.byBc[n] || [], names = hits.map(c => `${c} ${S.byCode[c][2]}`);
-  let cls, title, verdict, sub = '';
-  if (!S.sel) {
-    if (hits.length) { cls = 'r-ok'; title = '등록된 바코드'; verdict = '조회'; sub = names.map(esc).join('<br>'); }
-    else { cls = 'r-warn'; title = '미등록 바코드'; verdict = '조회-미등록'; }
-  } else if ((S.sel[1] && norm(S.sel[1]) === n) || hits.includes(S.sel[0])) {
-    cls = 'r-ok'; title = '✔ 적합'; verdict = '적합';
-  } else if (hits.length) {
-    cls = 'r-ng'; title = '✖ 부적합'; verdict = '부적합(다른 품목)'; sub = '이 바코드의 품목:<br>' + names.map(esc).join('<br>');
-  } else if (!S.sel[1]) {
-    cls = 'r-warn'; title = '바코드 미등록 품목'; verdict = '확인필요(품목 바코드 없음)'; sub = '선택 품목에 바코드가 없습니다';
+  const bc = digits(raw) || String(raw).trim();
+  const hits = (S.byBc[norm(bc)] || []).map(c => S.byCode[c]);
+  S.last = { bc, method, hits };
+  S.pick = hits.length === 1 ? hits[0][0] : null;
+  S.photo.res = null; S.pendingSave = null; $('resThumb').style.display = 'none'; $('note').value = '';
+  const stopped = hits.length && hits.every(x => x[5] === 'N');
+  if (!hits.length) {
+    $('resBox').className = 'result r-warn';
+    $('resBox').innerHTML = `<h2>미등록 바코드</h2><p>${esc(bc)}</p>`;
+  } else if (stopped) {
+    $('resBox').className = 'result r-ng';
+    $('resBox').innerHTML = `<h2>사용중지 품목</h2><p>${esc(bc)}</p>`;
   } else {
-    cls = 'r-ng'; title = '✖ 부적합'; verdict = '부적합(미등록 바코드)'; sub = 'DB에 없는 바코드입니다';
+    $('resBox').className = 'result r-info';
+    $('resBox').innerHTML = `<h2>${hits.length > 1 ? `등록 품목 ${hits.length}개` : '등록 품목'}</h2><p>${esc(bc)}</p>`;
   }
-  beep(cls === 'r-ok');
-  S.last = { bc, verdict, matched: names.join(' | '), method };
-  S.photo.res = null; $('resThumb').style.display = 'none'; $('note').value = '';
-  $('resBox').className = 'result ' + cls;
-  $('resBox').innerHTML = `<h2>${title}</h2><p style="font-size:20px">${esc(bc)}</p>${S.sel ? `<p>선택: ${esc(S.sel[2])}</p>` : ''}<p>${sub}</p>`;
-  const ng = verdict.startsWith('부적합');
-  $('saveBtn').textContent = ng ? '사진 찍고 저장' : '저장 후 다음';
-  let extra = '';
-  if (S.sel && !S.sel[1] && !hits.length) extra = `<button class="sec full" onclick="quickReg()">이 바코드를 선택 품목에 등록 (팀 PIN)</button>`;
-  else if (!hits.length) extra = `<button class="sec full" onclick="openReg('${esc(bc)}')">이 바코드로 신규 등록</button>`;
-  if (S.sel && S.sel[1] && verdict.startsWith('부적합')) extra += `<div style="height:6px"></div><button class="sec full" onclick="openEdit('${esc(S.sel[0])}','${esc(bc)}')">선택 품목 바코드를 이 번호로 수정 (수정 PIN)</button>`;
-  $('resExtra').innerHTML = extra;
+  beep(hits.length && !stopped);
+  paintItems();
+  if (hits.length) {
+    $('resActs').innerHTML = `<p class="muted" style="margin:0 0 6px">실물(입고 자재·제품)과 위 정보를 비교한 뒤 누르세요</p>
+      <div class="row"><button class="ok" onclick="saveInspect('일치')">✔ 일치 – 저장</button><button class="red" onclick="saveInspect('불일치')">✖ 불일치 – 저장</button></div>`;
+    $('resExtra').innerHTML = '';
+  } else {
+    $('resActs').innerHTML = `<button class="red full" onclick="saveInspect('미등록')">미등록으로 기록 저장</button>`;
+    $('resExtra').innerHTML = `<div class="row"><button class="sec" onclick="openReg('${esc(bc)}')">이 바코드로 신규 품목 등록</button><button class="sec" onclick="linkToItem()">기존 품목에 연결</button></div>`;
+  }
   show('s-res');
 }
+function paintItems() {
+  const h = S.last.hits;
+  $('resItems').innerHTML = (h.length > 1 ? '<p class="muted" style="margin:0 0 6px">같은 바코드를 쓰는 품목입니다. 실물에 해당하는 품목을 눌러 선택하세요.</p>' : '')
+    + h.map(x => infoCard(x, h.length > 1)).join('');
+}
+$('resItems').onclick = e => { const c = e.target.closest('.info'); if (c && c.dataset.c) { S.pick = c.dataset.c; paintItems(); } };
 
 /* ===== 검사 저장 (오프라인 대기열) ===== */
-async function saveInspect() {
+function saveInspect(kind) {
   const L = S.last; if (!L) return;
-  const ng = L.verdict.startsWith('부적합');
-  if (ng && !S.photo.res) { toast('부적합은 사진이 필요합니다'); return takePhoto('res'); }
-  const rec = { time: now(), mode: S.mode, user: S.user, selCode: S.sel ? S.sel[0] : '', selName: S.sel ? S.sel[2] : '', scanned: L.bc,
-    verdict: L.verdict, matched: L.matched, method: L.method, lot: $('lot').value, qty: $('qty').value, note: $('note').value };
+  if (L.hits.length > 1 && !S.pick && kind === '일치') return toast('해당 품목을 먼저 선택하세요');
+  if (kind !== '일치' && !S.photo.res) { S.pendingSave = kind; toast('불일치·미등록은 사진이 필요합니다'); return takePhoto('res'); }
+  S.pendingSave = null;
+  const sel = S.pick ? S.byCode[S.pick] : null;
+  const verdict = { 일치: '적합(정보 일치)', 불일치: '부적합(정보 불일치)', 미등록: '부적합(미등록 바코드)' }[kind];
+  const rec = { time: now(), mode: S.mode, user: S.user, selCode: sel ? sel[0] : '', selName: sel ? sel[2] : '', scanned: L.bc,
+    verdict, matched: L.hits.map(x => `${x[0]} ${x[2]}`).join(' | '), method: L.method, lot: $('lot').value, qty: $('qty').value, note: $('note').value };
   enqueue({ action: 'inspect', rec, photo: S.photo.res });
-  if (S.sel) { S.sess.n++; L.verdict === '적합' ? S.sess.ok++ : ng && S.sess.ng++; }
-  toast('저장됨'); S.sel ? startScan(S.sel[0]) : startScan(null);
+  S.sess.n++; kind === '일치' ? S.sess.ok++ : S.sess.ng++;
+  toast('저장됨'); toHome();
 }
 function enqueue(job) {
   const q = store.get('bq_queue', []); q.push(job);
@@ -368,43 +376,77 @@ $('photoIn').onchange = e => {
     c.width = img.width * k; c.height = img.height * k; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
     const d = c.toDataURL('image/jpeg', .7); URL.revokeObjectURL(url);
     S.photo[S.photoFor] = d; const th = $({ res: 'resThumb', reg: 'regThumb', edit: 'editThumb' }[S.photoFor]); th.src = d; th.style.display = 'block';
-    if (S.photoFor === 'res' && S.last && S.last.verdict.startsWith('부적합')) $('saveBtn').textContent = '저장 후 다음';
+    if (S.photoFor === 'res' && S.pendingSave) saveInspect(S.pendingSave);
   };
   img.src = url;
 };
+
+/* ===== 품목 검색 ===== */
+function openSearch(keep) {
+  if (!keep) $('kw').value = '';
+  $('linkNote').classList.toggle('hide', !S.linkBc);
+  if (S.linkBc) $('linkNote').textContent = `바코드 ${S.linkBc} 를 연결할 품목을 고르세요`;
+  show('s-search'); renderList(); $('kw').focus();
+}
+$('kw').addEventListener('input', renderList);
+function renderList() {
+  const kw = $('kw').value.trim().toLowerCase().replace(/\s+/g, '');
+  const el = $('list');
+  if (!kw) { el.innerHTML = '<p class="muted">자재코드나 품명 일부를 입력하세요. 예) 단상자, 5006391</p>'; return; }
+  const hit = [];
+  for (const x of S.master) {
+    if (x[0].includes(kw) || String(x[2]).toLowerCase().replace(/\s+/g, '').includes(kw)) { hit.push(x); if (hit.length >= 80) break; }
+  }
+  el.innerHTML = hit.length ? hit.map(x => `<div class="item" data-c="${esc(x[0])}"><b>${esc(x[2])}</b><span>${esc(x[0])} · ${esc(short(x[3]))}${x[4] ? ' · ' + esc(x[4]) : ''}${x[1] ? '<span class="tag">' + esc(x[1]) + '</span>' : '<span class="tag no">바코드 없음</span>'}${x[5] === 'N' ? '<span class="tag no">사용중지</span>' : ''}</span></div>`).join('')
+    : '<p class="muted">검색 결과 없음 → [신규 등록]</p>';
+}
+$('list').onclick = e => {
+  const it = e.target.closest('.item'); if (!it) return;
+  const x = S.byCode[it.dataset.c];
+  if (S.linkBc) return linkPick(x);
+  S.viewCode = x[0]; $('itemBox').innerHTML = infoCard(x, false); show('s-item');
+};
+
+/* ===== 미등록 바코드를 기존 품목에 연결 ===== */
+function linkToItem() { S.linkBc = S.last.bc; openSearch(); }
+async function linkPick(x) {
+  const bc = S.linkBc;
+  if (x[1]) { S.linkBc = null; return openEdit(x[0], bc); }  // 기존 바코드 교체 → 수정 PIN
+  if (!confirm(`${x[2]}\n바코드 ${bc} 를 등록할까요?`)) return;
+  const send = force => api('register', { item: { code: x[0], barcode: bc }, photo: S.photo.res, reason: '검사 중 바코드 최초 등록', force });
+  let r = await send(false);
+  if (r.confirm) { if (!confirm('같은 바코드를 쓰는 품목이 있습니다:\n' + r.dup.join('\n') + '\n\n계속할까요?')) return; r = await send(true); }
+  S.linkBc = null; afterWrite(r);
+}
 
 /* ===== 바코드를 입력칸에 스캔 ===== */
 let prevSection = null;
 function scanInto(fieldId) {
   prevSection = document.querySelector('section.on').id; S.scanTarget = fieldId;
-  document.querySelector('#s-scan > button').textContent = '← 입력 화면으로';
-  $('selCard').innerHTML = '<b>바코드를 비추세요</b>'; $('lotCard').classList.add('hide');
+  $('selCard').innerHTML = '<b>등록할 바코드를 비추세요</b>';
+  $('lotCard').classList.add('hide'); $('homeBtns').classList.add('hide'); $('backFromScan').classList.remove('hide');
   show('s-scan'); runScanner(fillTarget);
 }
 function fillTarget(raw) { const f = S.scanTarget; S.scanTarget = null; show(prevSection); $(f).value = digits(raw) || raw; }
+function goBack() { if (S.scanTarget) { S.scanTarget = null; show(prevSection); } else toHome(); }
 
 /* ===== 신규 등록 ===== */
 function openReg(bc) {
   ['rCode', 'rName', 'rBc', 'rType', 'rCust'].forEach(i => $(i).value = '');
-  if (bc) $('rBc').value = bc; S.photo.reg = null; $('regThumb').style.display = 'none'; show('s-reg');
+  if (bc) $('rBc').value = bc; S.photo.reg = S.photo.res || null;
+  $('regThumb').style.display = S.photo.reg ? 'block' : 'none'; if (S.photo.reg) $('regThumb').src = S.photo.reg;
+  show('s-reg');
 }
-async function quickReg() {
-  if (!confirm(`${S.sel[2]}\n바코드 ${S.last.bc} 를 등록할까요?`)) return;
-  const r = await api('register', { item: { code: S.sel[0], barcode: S.last.bc }, photo: S.photo.res, reason: '검사 중 바코드 최초 등록' });
-  afterWrite(r, () => quickRegForce());
-}
-async function quickRegForce() { const r = await api('register', { item: { code: S.sel[0], barcode: S.last.bc }, photo: S.photo.res, force: true }); afterWrite(r); }
 async function doReg(force) {
   const item = { code: $('rCode').value.trim(), name: $('rName').value.trim(), barcode: $('rBc').value.trim(), type: $('rType').value.trim(), customer: $('rCust').value.trim() };
   if (!item.code || !item.name) return toast('자재코드와 품명은 필수입니다');
   const r = await api('register', { item, photo: S.photo.reg, force: !!force });
-  afterWrite(r, () => doReg(true));
+  if (r.confirm) { if (confirm('같은 바코드를 쓰는 품목이 있습니다:\n' + r.dup.join('\n') + '\n\n같은 제품의 단상자·라벨이면 정상입니다. 계속할까요?')) return doReg(true); return; }
+  afterWrite(r);
 }
-async function afterWrite(r, retryForce) {
-  if (r.confirm) { if (confirm('같은 바코드를 쓰는 품목이 있습니다:\n' + r.dup.join('\n') + '\n\n같은 제품의 단상자·라벨이면 정상입니다. 계속할까요?')) return retryForce(); return; }
+async function afterWrite(r) {
   if (!r.ok) return toast(r.msg, 3500);
-  toast('DB에 반영되었습니다'); await refreshMaster(r.version);
-  const code = S.sel ? S.sel[0] : null; code ? startScan(code) : backSearch();
+  toast('DB에 반영되었습니다'); await refreshMaster(r.version); toHome();
 }
 
 /* ===== 수정 (수정 PIN) ===== */
@@ -428,7 +470,7 @@ async function doEdit(force) {
   const r = await api('update', { pin: ep, code: S.editCode, changes: ch, reason, photo: S.photo.edit, force: !!force });
   if (r.confirm) { if (confirm('같은 바코드를 쓰는 품목이 있습니다:\n' + r.dup.join('\n') + '\n\n계속할까요?')) return doEdit(true); return; }
   if (!r.ok) return toast(r.msg, 3500);
-  toast(`수정 완료 (${r.changed}개 항목)`); await refreshMaster(r.version); startScan(S.editCode);
+  toast(`수정 완료 (${r.changed}개 항목)`); await refreshMaster(r.version); toHome();
 }
 
 /* ===== 관리자 ===== */
@@ -454,6 +496,16 @@ async function setUsers() {
   if (!r.ok) return toast(r.msg);
   toast('검사자 목록 저장'); $('user').innerHTML = r.users.filter(u => u.use !== 'N').map(u => `<option>${esc(u.name)}</option>`).join('');
 }
+
+/* ===== 폰의 뒤로가기 버튼: 앱을 닫지 않고 이전 화면으로 ===== */
+history.pushState(null, '');
+window.addEventListener('popstate', () => {
+  history.pushState(null, '');
+  const cur = document.querySelector('section.on').id;
+  if (cur === 's-scan') S.scanTarget ? goBack() : show('s-user');
+  else if (cur === 's-item') openSearch(true);
+  else if (['s-res', 's-search', 's-reg', 's-edit', 's-admin'].includes(cur)) toHome();
+});
 
 /* ===== 시연 모드 (서버 없이 화면 확인용) ===== */
 const DEMO_ROWS = [
