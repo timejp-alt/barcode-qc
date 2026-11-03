@@ -82,6 +82,7 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
 
 <!-- 스캔 -->
 <section id="s-scan">
+  <button class="sec full" style="margin-bottom:10px" onclick="goBack()">← 품목 선택으로</button>
   <div class="card" id="selCard"></div>
   <div class="card" id="lotCard">
     <div class="row"><div><label>LOT</label><input id="lot"></div><div><label>수량</label><input id="qty" inputmode="numeric"></div></div>
@@ -91,12 +92,12 @@ button.sec{background:#e8edf3;color:var(--pri)}button.red{background:var(--ng)}b
   <div class="row" style="margin-top:8px">
     <button class="sec" onclick="torch()">플래시</button>
     <button class="sec" onclick="manual()">숫자 입력</button>
-    <button class="sec" onclick="backSearch()">품목 다시 선택</button>
   </div>
 </section>
 
 <!-- 결과 -->
 <section id="s-res">
+  <button class="sec full" style="margin-bottom:10px" onclick="backSearch()">← 품목 선택으로 (저장 안 함)</button>
   <div id="resBox" class="result"></div>
   <div class="card">
     <label>비고</label><input id="note">
@@ -260,6 +261,7 @@ $('list').onclick = e => { const it = e.target.closest('.item'); if (it) startSc
 /* ===== 스캔 ===== */
 function startScan(code) {
   S.sel = code ? S.byCode[code] : null; S.scanTarget = null;
+  document.querySelector('#s-scan > button').textContent = '← 품목 선택으로';
   $('lotCard').classList.toggle('hide', !S.sel);
   $('selCard').innerHTML = S.sel
     ? `<b>${esc(S.sel[2])}</b><div class="muted">${esc(S.sel[0])} · ${esc(short(S.sel[3]))}</div><div>등록 바코드: ${S.sel[1] ? '<b>' + esc(S.sel[1]) + '</b>' : '<span style="color:var(--ng)">없음</span>'}</div><button class="sec" style="margin-top:8px" onclick="openEdit('${esc(S.sel[0])}')">품목 수정</button>`
@@ -280,6 +282,16 @@ async function stopScan() { const s = S.scanner; S.scanner = null; if (s) { try 
 async function torch() { try { const s = S.scanner; S._torch = !S._torch; await s.applyVideoConstraints({ advanced: [{ torch: S._torch }] }); } catch (e) { toast('이 기기는 플래시 제어를 지원하지 않습니다'); } }
 function manual() { const v = prompt('바코드 숫자 입력'); if (v && digits(v)) { stopScan(); (S.scanTarget ? fillTarget : onScan)(v, '수기입력'); } }
 function backSearch() { show('s-search'); renderList(); }
+function goBack() { if (S.scanTarget) { S.scanTarget = null; show(prevSection); } else backSearch(); }
+/* 폰의 뒤로가기 버튼: 앱을 닫지 않고 이전 화면으로 */
+history.pushState(null, '');
+window.addEventListener('popstate', () => {
+  history.pushState(null, '');
+  const cur = document.querySelector('section.on').id;
+  if (cur === 's-scan') goBack();
+  else if (['s-res', 's-reg', 's-edit', 's-admin'].includes(cur)) backSearch();
+  else if (cur === 's-search') show('s-user');
+});
 
 function onScan(raw, method) {
   const bc = digits(raw) || String(raw).trim(), n = norm(bc);
@@ -365,6 +377,7 @@ $('photoIn').onchange = e => {
 let prevSection = null;
 function scanInto(fieldId) {
   prevSection = document.querySelector('section.on').id; S.scanTarget = fieldId;
+  document.querySelector('#s-scan > button').textContent = '← 입력 화면으로';
   $('selCard').innerHTML = '<b>바코드를 비추세요</b>'; $('lotCard').classList.add('hide');
   show('s-scan'); runScanner(fillTarget);
 }
